@@ -167,7 +167,7 @@ public class TCPChatController extends BaseController {
 
         }
         
-        setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Error);
+        setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Disconnected);
         socket = null;
     }
             
