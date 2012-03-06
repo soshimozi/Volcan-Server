@@ -22,6 +22,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.SocketFactory;
 import javax.net.ssl.*;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -40,6 +41,7 @@ public class TCPChatController extends BaseController {
     public static String ELEMENT_DISCONNECT_ACTION = "Disconnect";
     public static String ELEMENT_SEND_ACTION = "Send";
     public static String ELEMENT_INCOMMING_MESSAGE_PROPERTY = "IncommingMessage";
+    public static String ELEMENT_LAST_ERROR_PROPERTY = "LastError";
             
     
     private Socket socket;
@@ -134,19 +136,32 @@ public class TCPChatController extends BaseController {
 
                         if( config.getSecurity().getUseSSL()) {
                             try {
-                                socket = negotiateSecureSocket(address, port, ".keystore", "changeit");
+                                socket = negotiateSecureSocket(address, port);
                             } catch (NoSuchAlgorithmException ex) {
                                 Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                                setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
                             } catch (KeyStoreException ex) {
                                 Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                                setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
                             } catch (KeyManagementException ex) {
                                 Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                                setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
                             } catch (IOException ex) {
                                 Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                                setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
                             } catch (CertificateEncodingException ex) {
                                 Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                                setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
                             } catch (CertificateException ex) {
                                 Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                                setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
+                            }
+                        } else {
+                            try {
+                                socket = getNonSecureSocket(address, port);
+                            } catch (IOException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                                setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());                            
                             }
                         }
 
@@ -165,11 +180,17 @@ public class TCPChatController extends BaseController {
                             setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Error);
                         }
                     }
+
                 });
         
         
         connectThread.start();
                 
+    }
+
+    private Socket getNonSecureSocket(String host, int port) throws IOException {
+        SocketFactory factory = SocketFactory.getDefault();
+        return factory.createSocket(host, port);
     }
 
     private void pumpMessages() {
@@ -188,14 +209,12 @@ public class TCPChatController extends BaseController {
 
         } catch (IOException ex) {
             Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-
-            try {
-                inputStream.close();
-            } catch (IOException ex) {
-                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
+        }
+        
+        try {
+            inputStream.close();
+        } catch (IOException ex) {
+            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Disconnected);
@@ -252,14 +271,19 @@ public class TCPChatController extends BaseController {
             
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+            setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
         } catch (CertificateException ex) {
             Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+            setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());            
         } catch (KeyStoreException ex) {
             Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+            setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
         } catch (FileNotFoundException ex) {
             Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+            setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
         } catch (IOException ex) {
             Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+            setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
         } 
         finally {
             try {
@@ -272,7 +296,7 @@ public class TCPChatController extends BaseController {
         return null;
     }
     
-    private SSLSocket negotiateSecureSocket(String host, int port, String keystore, String password) throws KeyStoreException, KeyManagementException, CertificateEncodingException, CertificateException, IOException, NoSuchAlgorithmException {
+    private SSLSocket negotiateSecureSocket(String host, int port) throws KeyStoreException, KeyManagementException, CertificateEncodingException, CertificateException, IOException, NoSuchAlgorithmException {
 
         X509CacheingTrustManager tm = 
                 (X509CacheingTrustManager) X509CacheingTrustManager.CreateTrustManager(loadKeyStore());
@@ -288,30 +312,33 @@ public class TCPChatController extends BaseController {
 
             client.setSoTimeout(soTimeout);
             return client;
-        } catch (SSLException e) {
-            client.close();
+        } catch (SSLException ex) {
+            setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
         }
 
-        // we got here so that means the handshake failed, so install cert chain
-        installCertificateChain(tm.getChain(), loadKeyStore(), host);
+        if( tm.getChain() != null ) {
+            // we got here so that means the handshake failed, so install cert chain
+            installCertificateChain(tm.getChain(), loadKeyStore(), host);
 
-        // get socket and reload keystore
-        client = getSecureSocket(
-                X509CacheingTrustManager.CreateTrustManager(loadKeyStore()), 
-                host, port);
+            // get socket and reload keystore
+            client = getSecureSocket(
+                    X509CacheingTrustManager.CreateTrustManager(loadKeyStore()), 
+                    host, port);
 
-        soTimeout = client.getSoTimeout();
-        client.setSoTimeout(10000);
-        try {
-            client.startHandshake();
+            soTimeout = client.getSoTimeout();
+            client.setSoTimeout(10000);
+            try {
+                client.startHandshake();
 
-            client.setSoTimeout(soTimeout);
-            return client;
-        } catch (SSLException e) {
-            client.close();
+                client.setSoTimeout(soTimeout);
+                return client;
+            } catch (SSLException ex) {
+                setModelProperty(ELEMENT_LAST_ERROR_PROPERTY, ex.getMessage());
+                client.close();
+            }
         }
-
-        // something happened while saving the cert, can't go on
+        
+        // something happened while negotiating or saving the cert, can't go on
         return null;
     }
 

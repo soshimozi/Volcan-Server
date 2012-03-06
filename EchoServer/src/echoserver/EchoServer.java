@@ -5,12 +5,15 @@
 package echoserver;
 
 import com.VolcanServer.Net.SocketTransport;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
@@ -18,7 +21,8 @@ import java.util.logging.Logger;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocket;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.XMLConfiguration;
 
 /**
  *
@@ -28,10 +32,8 @@ public class EchoServer implements ClientDisconnectedListener, MessageListener, 
 
     private final List<ClientConnection> connections = new CopyOnWriteArrayList();
     
-    String keystore;
-    char keystorepass[] = "2et?S-#57JUXu!eThe6".toCharArray();
-    char keypassword[] = "2et?S-#57JUXu!eThe6".toCharArray();
-    public static final int HTTPS_PORT = 4000;
+    private ServerConfiguration serverConfiguration;
+    //public static final int HTTPS_PORT = 4000;
    
     /**
      * @param args the command line arguments
@@ -54,22 +56,10 @@ public class EchoServer implements ClientDisconnectedListener, MessageListener, 
     public void run() {
         try {
             
-            String filename = "volcansoft.com.key";
-            File file = new File(filename);
-            if (file.isFile() == false) {
-                char SEP = File.separatorChar;
-                
-                String javaHome = System.getProperty("java.home");
-                
-                File dir = new File(javaHome + SEP
-                        + "lib" + SEP + "security");
-                file = new File(dir, filename);
-            }
-            
-            keystore = file.getAbsolutePath();
-            
-            ServerSocket server = getServer();
-            Logger.getLogger(EchoServer.class.getName()).log(Level.INFO, "Server started and listening on port {0}", HTTPS_PORT);
+            serverConfiguration = loadServerConfiguration();
+            ServerSocket server = getServerSocket();
+
+            Logger.getLogger(EchoServer.class.getName()).log(Level.INFO, "Server started and listening on port {0}", serverConfiguration.getPort());
             
             while(true) {
                 try {
@@ -110,26 +100,63 @@ public class EchoServer implements ClientDisconnectedListener, MessageListener, 
         
     }
     
-    public ServerSocket getServer() throws Exception {
+    public ServerSocket getServerSocket() throws Exception {
 
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream(keystore), keystorepass);
+        ServerSocketFactory factory;
+        if( serverConfiguration.getSecurity().getUseSSL() ) {
+            KeyManagerFactory kmf = getKeyStore();
+            
+            SSLContext sslcontext = 
+                SSLContext.getInstance("SSLv3");
+
+            sslcontext.init(kmf.getKeyManagers(), null, null);
+            factory = sslcontext.getServerSocketFactory();
+        } else {
+            factory = ServerSocketFactory.getDefault();
+        }
+            
+        return factory.createServerSocket(serverConfiguration.getPort());
+    }
+
+    private KeyManagerFactory getKeyStore() throws CertificateException, KeyStoreException, UnrecoverableKeyException, IOException, NoSuchAlgorithmException {
         
+        String keystoreFile = serverConfiguration.getSecurity().getKeyStoreFile();
+        
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream(keystoreFile), serverConfiguration.getSecurity().getKeyStorePassword().toCharArray());
         KeyManagerFactory kmf = 
             KeyManagerFactory.getInstance("SunX509");
-        
-        kmf.init(ks, keystorepass);
-        SSLContext sslcontext = 
-            SSLContext.getInstance("SSLv3");
-        
-        sslcontext.init(kmf.getKeyManagers(), null, null);
-        ServerSocketFactory ssf = 
-            sslcontext.getServerSocketFactory();
-        
-        SSLServerSocket serversocket = (SSLServerSocket) 
-            ssf.createServerSocket(HTTPS_PORT);
-        return serversocket;
+        kmf.init(ks, serverConfiguration.getSecurity().getKeyStorePassword().toCharArray());
+        return kmf;
+    }
 
+    private ServerConfiguration loadServerConfiguration() {
+        
+        ServerConfiguration configuration = new ServerConfiguration();
+        
+        configuration.setSecurity(ServerConfiguration.CreateSecurity());
+        
+        XMLConfiguration xmlConfig = null;
+        try {
+            xmlConfig = new XMLConfiguration("config.xml");
+        } catch (ConfigurationException ex) {
+            Logger.getLogger(EchoServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        if( xmlConfig != null ) {
+            int port = xmlConfig.getInt("listen-port");
+            
+            String keystoreFilename = xmlConfig.getString("security.keystore-file");
+            String keystorePassword = xmlConfig.getString("security.keystore-password");
+            Boolean useSSL = xmlConfig.getBoolean("security.use-ssl");
+            
+            configuration.getSecurity().setKeyStoreFile(keystoreFilename);
+            configuration.getSecurity().setKeyStorePassword(keystorePassword);
+            configuration.getSecurity().setUseSSL(useSSL);
+            configuration.setPort(port);
+        }
+        
+        return configuration;
     }
     
 }

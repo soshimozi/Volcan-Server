@@ -68,12 +68,7 @@ public class TCPChat {
             config.getSecurity().setUseSSL(useSSL);
             
         }
-        
-//        try {
-//            XMLConfiguration xmlConfiguration = new XMLConfiguration("config.xml");
-//        } catch (ConfigurationException ex) {
-//            Logger.getLogger(TCPChat.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+
         return config;
     }
 }

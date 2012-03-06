@@ -17,12 +17,24 @@ public class TCPChatModel extends BaseModel {
     private int port;
     private String chatEntry;
     private String incommingMessage;
+    private String lastError;
 
     public void initDefault() {
         setStatus(StatusEnum.Disconnected);
         setHost("");
         setPort(0);
         setChatEntry("");
+    }
+
+    public String getLastError() {
+        return lastError;
+    }
+    
+    public void setLastError(String value) {
+        String oldValue = this.lastError;
+        this.lastError = value;
+
+        firePropertyChange(TCPChatController.ELEMENT_LAST_ERROR_PROPERTY, oldValue, value);
     }
 
     public String getHost() {

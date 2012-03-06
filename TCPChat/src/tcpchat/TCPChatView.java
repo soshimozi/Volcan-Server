@@ -237,6 +237,8 @@ public class TCPChatView extends AbstractViewPanel {
     private javax.swing.JLabel statusField;
     // End of variables declaration//GEN-END:variables
 
+    private String lastError;
+
     @Override
     public void modelPropertyChange(PropertyChangeEvent pce) {
         if( pce.getPropertyName().equals(TCPChatController.ELEMENT_STATUS_PROPERTY )) {
@@ -255,6 +257,8 @@ public class TCPChatView extends AbstractViewPanel {
             if( !output.equals("") ) {
                 chatText.append(output);
             }
+        } else if( pce.getPropertyName().equals(TCPChatController.ELEMENT_LAST_ERROR_PROPERTY )) {
+            lastError = (String) pce.getNewValue();
         }
     }
 
@@ -283,7 +287,7 @@ public class TCPChatView extends AbstractViewPanel {
          
                 chatLine.setText(""); chatLine.setEnabled(false);
                 statusColor.setBackground(Color.red);
-                statusField.setText("Error");
+                statusField.setText("Error - " + lastError);
                 
                 break;
                 
@@ -337,6 +341,7 @@ public class TCPChatView extends AbstractViewPanel {
                 break;
         }
         
+        statusField.setToolTipText(statusField.getText());
         repaint();
     }
 }

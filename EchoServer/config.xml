@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+<configuration>
+    <listen-port>4000</listen-port>
+    <security>
+        <keystore-file>volcansoft.com.key</keystore-file>
+        <keystore-password>2et?S-#57JUXu!eThe6</keystore-password>
+        <use-ssl>True</use-ssl>
+    </security>
+</configuration>
