@@ -2,14 +2,15 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package tcpchat;
+package com.TCPChat.View;
 
+import com.TCPChat.Controller.TCPChatController;
+import com.TCPChat.Model.StatusEnum;
+import com.TCPChat.Model.TCPChatModel;
 import com.mvc.view.AbstractViewPanel;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  *
@@ -36,18 +37,16 @@ public class TCPChatView extends AbstractViewPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         statusBar = new javax.swing.JPanel();
         statusColor = new javax.swing.JTextField(1);
         statusField = new javax.swing.JLabel();
         optionsPane = new javax.swing.JPanel();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
         ipField = new javax.swing.JTextField();
-        jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         portField = new javax.swing.JTextField();
-        jPanel3 = new javax.swing.JPanel();
         btnConnect = new javax.swing.JButton();
         btnDisconnect = new javax.swing.JButton();
         chatPane = new javax.swing.JPanel();
@@ -57,7 +56,7 @@ public class TCPChatView extends AbstractViewPanel {
 
         setLayout(new java.awt.BorderLayout());
 
-        statusBar.setPreferredSize(new java.awt.Dimension(561, 40));
+        statusBar.setPreferredSize(new java.awt.Dimension(561, 20));
         statusBar.setLayout(new java.awt.BorderLayout());
 
         statusColor.setBackground(new java.awt.Color(204, 0, 51));
@@ -66,21 +65,25 @@ public class TCPChatView extends AbstractViewPanel {
         statusBar.add(statusColor, java.awt.BorderLayout.WEST);
 
         statusField.setText("Disconnected");
+        statusField.setPreferredSize(new java.awt.Dimension(64, 24));
         statusBar.add(statusField, java.awt.BorderLayout.CENTER);
 
         add(statusBar, java.awt.BorderLayout.SOUTH);
 
-        optionsPane.setPreferredSize(new java.awt.Dimension(275, 200));
-        optionsPane.setLayout(new java.awt.GridLayout(4, 1));
+        optionsPane.setPreferredSize(new java.awt.Dimension(375, 200));
+        java.awt.GridBagLayout optionsPaneLayout = new java.awt.GridBagLayout();
+        optionsPaneLayout.columnWidths = new int[] {0, 5, 0, 5, 0, 5, 0, 5, 0};
+        optionsPaneLayout.rowHeights = new int[] {0, 5, 0, 5, 0, 5, 0, 5, 0};
+        optionsPane.setLayout(optionsPaneLayout);
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(300, 30));
-        jPanel1.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+        jLabel3.setText("Host Address:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        optionsPane.add(jLabel3, gridBagConstraints);
 
-        jLabel1.setText("Host Address:");
-        jPanel1.add(jLabel1);
-
-        ipField.setColumns(15);
-        ipField.setEnabled(false);
+        ipField.setPreferredSize(new java.awt.Dimension(130, 20));
         ipField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 ipFieldActionPerformed(evt);
@@ -91,17 +94,21 @@ public class TCPChatView extends AbstractViewPanel {
                 ipFieldFocusLost(evt);
             }
         });
-        jPanel1.add(ipField);
-
-        optionsPane.add(jPanel1);
-
-        jPanel2.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        optionsPane.add(ipField, gridBagConstraints);
 
         jLabel2.setText("Port:");
-        jPanel2.add(jLabel2);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        optionsPane.add(jLabel2, gridBagConstraints);
 
-        portField.setColumns(15);
-        portField.setEnabled(false);
+        portField.setPreferredSize(new java.awt.Dimension(130, 20));
         portField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 portFieldActionPerformed(evt);
@@ -112,13 +119,12 @@ public class TCPChatView extends AbstractViewPanel {
                 portFieldFocusLost(evt);
             }
         });
-        jPanel2.add(portField);
-
-        optionsPane.add(jPanel2);
-
-        jPanel3.setPreferredSize(new java.awt.Dimension(250, 25));
-        jPanel3.setRequestFocusEnabled(false);
-        jPanel3.setLayout(new java.awt.GridLayout(1, 2));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        optionsPane.add(portField, gridBagConstraints);
 
         btnConnect.setText("Connect");
         btnConnect.addActionListener(new java.awt.event.ActionListener() {
@@ -126,7 +132,10 @@ public class TCPChatView extends AbstractViewPanel {
                 btnConnectActionPerformed(evt);
             }
         });
-        jPanel3.add(btnConnect);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 8;
+        optionsPane.add(btnConnect, gridBagConstraints);
 
         btnDisconnect.setText("Disconnect");
         btnDisconnect.setEnabled(false);
@@ -135,9 +144,10 @@ public class TCPChatView extends AbstractViewPanel {
                 btnDisconnectActionPerformed(evt);
             }
         });
-        jPanel3.add(btnDisconnect);
-
-        optionsPane.add(jPanel3);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 8;
+        gridBagConstraints.gridy = 8;
+        optionsPane.add(btnDisconnect, gridBagConstraints);
 
         add(optionsPane, java.awt.BorderLayout.WEST);
 
@@ -155,6 +165,7 @@ public class TCPChatView extends AbstractViewPanel {
         chatText.setColumns(10);
         chatText.setEditable(false);
         chatText.setRows(20);
+        chatText.setPreferredSize(new java.awt.Dimension(84, 275));
         chatTextPane.setViewportView(chatText);
 
         chatPane.add(chatTextPane, java.awt.BorderLayout.CENTER);
@@ -169,42 +180,6 @@ public class TCPChatView extends AbstractViewPanel {
         this.fireAction(bubbleEvent);
     }//GEN-LAST:event_btnConnectActionPerformed
 
-    private void ipFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ipFieldActionPerformed
-        // TODO add your handling code here:
-        //firePropertyChange(TCPChatController.ELEMENT_HOST_PROPERTY)
-        model.setHost(ipField.getText());
-        
-    }//GEN-LAST:event_ipFieldActionPerformed
-
-    private void ipFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_ipFieldFocusLost
-        // TODO add your handling code here:
-        model.setHost(ipField.getText());
-    }//GEN-LAST:event_ipFieldFocusLost
-
-    private void portFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_portFieldActionPerformed
-        // TODO add your handling code here:
-        Integer i;
-        
-        try {
-            i = Integer.parseInt(portField.getText());
-            
-            model.setPort(i);
-        } catch(NumberFormatException nfe) {
-        }
-            
-    }//GEN-LAST:event_portFieldActionPerformed
-
-    private void portFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_portFieldFocusLost
-        Integer i;
-        
-        try {
-            i = Integer.parseInt(portField.getText());
-            
-            model.setPort(i);
-        } catch(NumberFormatException nfe) {
-        }
-    }//GEN-LAST:event_portFieldFocusLost
-
     private void btnDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDisconnectActionPerformed
         ActionEvent bubbleEvent = new ActionEvent(evt.getSource(), 0, TCPChatController.ELEMENT_DISCONNECT_ACTION);
         this.fireAction(bubbleEvent);
@@ -217,6 +192,40 @@ public class TCPChatView extends AbstractViewPanel {
         this.fireAction(bubbleEvent);
     }//GEN-LAST:event_chatLineActionPerformed
 
+    private void ipFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ipFieldActionPerformed
+        model.setHost(ipField.getText());
+    }//GEN-LAST:event_ipFieldActionPerformed
+
+    private void portFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_portFieldActionPerformed
+        // TODO add your handling code here:
+        int port;
+        
+        try {
+            port = Integer.parseInt(portField.getText());
+            model.setPort(port);
+        } catch(NumberFormatException ex) {
+            
+        }
+            
+    }//GEN-LAST:event_portFieldActionPerformed
+
+    private void portFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_portFieldFocusLost
+        // TODO add your handling code here:
+        int port;
+        
+        try {
+            port = Integer.parseInt(portField.getText());
+            model.setPort(port);
+        } catch(NumberFormatException ex) {
+            
+        }        
+    }//GEN-LAST:event_portFieldFocusLost
+
+    private void ipFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_ipFieldFocusLost
+        // TODO add your handling code here:
+        model.setHost(ipField.getText());
+    }//GEN-LAST:event_ipFieldFocusLost
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JButton btnConnect;
     private javax.swing.JButton btnDisconnect;
@@ -225,11 +234,8 @@ public class TCPChatView extends AbstractViewPanel {
     private javax.swing.JTextArea chatText;
     private javax.swing.JScrollPane chatTextPane;
     private javax.swing.JTextField ipField;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel optionsPane;
     private javax.swing.JTextField portField;
     private javax.swing.JPanel statusBar;

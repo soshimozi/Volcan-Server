@@ -4,7 +4,11 @@
  */
 package tcpchat;
 
-import java.awt.BorderLayout; 
+import com.TCPChat.Configuration.ChatConfiguration;
+import com.TCPChat.Controller.TCPChatController;
+import com.TCPChat.Model.TCPChatModel;
+import com.TCPChat.View.TCPChatView;
+import java.awt.BorderLayout;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;

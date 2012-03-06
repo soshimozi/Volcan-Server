@@ -25,16 +25,18 @@ public class ChatView extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        statusPanel = new javax.swing.JPanel();
         statusColor = new javax.swing.JPanel();
         statusText = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
 
-        setLayout(new java.awt.BorderLayout());
+        java.awt.GridBagLayout layout = new java.awt.GridBagLayout();
+        layout.columnWidths = new int[] {0, 5, 0};
+        layout.rowHeights = new int[] {0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0};
+        setLayout(layout);
 
-        statusPanel.setPreferredSize(new java.awt.Dimension(400, 20));
-        statusPanel.setLayout(new java.awt.BorderLayout());
-
+        statusColor.setBackground(new java.awt.Color(204, 0, 102));
         statusColor.setPreferredSize(new java.awt.Dimension(20, 20));
 
         javax.swing.GroupLayout statusColorLayout = new javax.swing.GroupLayout(statusColor);
@@ -48,26 +50,36 @@ public class ChatView extends javax.swing.JPanel {
             .addGap(0, 20, Short.MAX_VALUE)
         );
 
-        statusPanel.add(statusColor, java.awt.BorderLayout.WEST);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 10;
+        add(statusColor, gridBagConstraints);
+
+        statusText.setPreferredSize(new java.awt.Dimension(200, 20));
+
+        jLabel3.setText("Disconnected");
 
         javax.swing.GroupLayout statusTextLayout = new javax.swing.GroupLayout(statusText);
         statusText.setLayout(statusTextLayout);
         statusTextLayout.setHorizontalGroup(
             statusTextLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 380, Short.MAX_VALUE)
+            .addGroup(statusTextLayout.createSequentialGroup()
+                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 66, Short.MAX_VALUE))
         );
         statusTextLayout.setVerticalGroup(
             statusTextLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 20, Short.MAX_VALUE)
+            .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 20, Short.MAX_VALUE)
         );
 
-        statusPanel.add(statusText, java.awt.BorderLayout.EAST);
-
-        add(statusPanel, java.awt.BorderLayout.SOUTH);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 10;
+        add(statusText, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel statusColor;
-    private javax.swing.JPanel statusPanel;
     private javax.swing.JPanel statusText;
     // End of variables declaration//GEN-END:variables
 }
