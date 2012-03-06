@@ -12,7 +12,11 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
-import java.security.*;
+import java.net.Socket;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -38,7 +42,12 @@ public class TCPChatController extends BaseController {
     public static String ELEMENT_INCOMMING_MESSAGE_PROPERTY = "IncommingMessage";
             
     
-    private SSLSocket socket;
+    private Socket socket;
+    private final ChatConfiguration config;
+    
+    public  TCPChatController(ChatConfiguration config) {
+        this.config = config;
+    }
     
     @Override
     public void addView(AbstractViewPanel view) {
@@ -68,17 +77,37 @@ public class TCPChatController extends BaseController {
         super.addView(view);
     }
     
+    private Thread sendThread = null;
+    
     final void send() {
-        try {
-            String chatText = (String) getModelProperty(TCPChatModel.class, TCPChatController.ELEMENT_CHAT_ENTRY_PROPERTY);
-            BufferedWriter bufferedwriter 
-                    = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            bufferedwriter.write(chatText + "\n");
-            bufferedwriter.flush();
-        } catch (IOException ex) {
-            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-        } 
-        setModelProperty(ELEMENT_CHAT_ENTRY_PROPERTY, "");
+           
+        if( sendThread == null ) {
+            sendThread = new Thread(
+                    new Runnable() {
+
+                        @Override
+                        public void run() {
+                            try {
+                                String chatText = (String) getModelProperty(TCPChatModel.class, TCPChatController.ELEMENT_CHAT_ENTRY_PROPERTY);
+                                BufferedWriter bufferedwriter 
+                                        = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                                bufferedwriter.write(chatText + "\n");
+                                bufferedwriter.flush();
+                            } catch (IOException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                            } 
+                            setModelProperty(ELEMENT_CHAT_ENTRY_PROPERTY, "");
+
+                            sendThread = null;
+                        }
+
+                    }
+                );
+
+            sendThread.start();
+        }
+        
+        
     }
     
     final void disconnect() {
@@ -103,20 +132,22 @@ public class TCPChatController extends BaseController {
                         String address = (String) getModelProperty(TCPChatModel.class, ELEMENT_HOST_PROPERTY);
                         int port = (Integer) getModelProperty(TCPChatModel.class, ELEMENT_PORT_PROPERTY);
 
-                        try {
-                            socket = negotiateSecureSocket(address, port, ".keystore", "changeit");
-                        } catch (NoSuchAlgorithmException ex) {
-                            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (KeyStoreException ex) {
-                            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (KeyManagementException ex) {
-                            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (IOException ex) {
-                            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (CertificateEncodingException ex) {
-                            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (CertificateException ex) {
-                            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                        if( config.getSecurity().getUseSSL()) {
+                            try {
+                                socket = negotiateSecureSocket(address, port, ".keystore", "changeit");
+                            } catch (NoSuchAlgorithmException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (KeyStoreException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (KeyManagementException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (IOException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (CertificateEncodingException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (CertificateException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
 
                         if( socket != null ) {
@@ -150,7 +181,7 @@ public class TCPChatController extends BaseController {
             InputStreamReader reader = new InputStreamReader(inputStream);
             BufferedReader bufferedReader = new BufferedReader(reader);
 
-            String line = null;
+            String line;
             while((line = bufferedReader.readLine()) != null) {
                 setModelProperty(ELEMENT_INCOMMING_MESSAGE_PROPERTY, line + "\n");
             }
@@ -171,48 +202,48 @@ public class TCPChatController extends BaseController {
         socket = null;
     }
             
-    
-    
-    private SSLSocket getSocket(X509CacheingTrustManager tm, String address, int port) throws KeyManagementException, IOException, NoSuchAlgorithmException {
+    private SSLSocket getSecureSocket(X509TrustManager trust, String address, int port) throws KeyManagementException, IOException, NoSuchAlgorithmException {
         SSLContext context = SSLContext.getInstance("TLS");       
-        context.init(null, new TrustManager[]{tm}, null);
+        context.init(null, new TrustManager[]{trust}, null);
         SSLSocketFactory factory = context.getSocketFactory();
         return (SSLSocket) factory.createSocket(address, port);
     }
 
-    private X509CacheingTrustManager getTrust(KeyStore ks) throws NoSuchAlgorithmException, KeyStoreException {
-        TrustManagerFactory tmf =
-                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        tmf.init(ks);
-        X509TrustManager defaultTrustManager = (X509TrustManager) tmf.getTrustManagers()[0];
-        return new X509CacheingTrustManager(defaultTrustManager);
-    }
     
-    private static String getCertPath(String certfile, boolean loadDefault) {
-        File file;
-        char SEP = File.separatorChar;
-        File dir = new File(System.getProperty("user.home") + SEP
+    private String getCertPath(boolean loadDefault) {
+        
+        // load from xml configuration
+        String keystoreFile = config.getSecurity().getKeystoreFile();
+
+        // add .volcansoft directory if not there
+        File directory = new File(System.getProperty("user.home") + File.separatorChar
                 + ".volcansoft");
-        file = new File(dir, certfile);
+        
+        if( !directory.exists()) {
+            directory.mkdir();
+        }
+        
+        File file = new File(directory, keystoreFile);
         if (file.isFile() == false && loadDefault) {
             // load the default cert file
-            dir = new File(
+            directory = new File(
                     System.getProperty("java.home") + 
-                    SEP + "lib" + SEP + "security");
+                    File.separatorChar + "lib" + File.separatorChar + "security");
 
-            file = new File(dir, "cacerts");
-         
+            file = new File(directory, "cacerts");
         }
 
         return file.toString();
     }
     
-    private KeyStore loadKeyStore(String certfile, String certpassword) {
+    private KeyStore loadKeyStore() {
         InputStream in = null;
         
         try {
             
-            File file = new File(getCertPath(certfile, true));
+            String certpassword = config.getSecurity().getKeystorePassword();
+            
+            File file = new File(getCertPath(true));
             in = new FileInputStream(file);
             KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
             ks.load(in, certpassword.toCharArray());
@@ -241,19 +272,20 @@ public class TCPChatController extends BaseController {
         return null;
     }
     
-    private SSLSocket negotiateSecureSocket(String address, int port, String keystore, String password) throws KeyStoreException, KeyManagementException, CertificateEncodingException, CertificateException, IOException, NoSuchAlgorithmException {
-        KeyStore ks = loadKeyStore(keystore, password);
-        X509CacheingTrustManager tm = getTrust(ks);
+    private SSLSocket negotiateSecureSocket(String host, int port, String keystore, String password) throws KeyStoreException, KeyManagementException, CertificateEncodingException, CertificateException, IOException, NoSuchAlgorithmException {
 
-        SSLSocket client = getSocket(tm, address, port);
-        
+        X509CacheingTrustManager tm = 
+                (X509CacheingTrustManager) X509CacheingTrustManager.CreateTrustManager(loadKeyStore());
+
+        SSLSocket client = getSecureSocket(tm, host, port);
+
         setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Handshaking);
 
         int soTimeout = client.getSoTimeout();
         client.setSoTimeout(10000);
         try {
             client.startHandshake();
-            
+
             client.setSoTimeout(soTimeout);
             return client;
         } catch (SSLException e) {
@@ -261,18 +293,18 @@ public class TCPChatController extends BaseController {
         }
 
         // we got here so that means the handshake failed, so install cert chain
-        installCertificateChain(tm.getChain(), ks, address, keystore, password);
+        installCertificateChain(tm.getChain(), loadKeyStore(), host);
 
         // get socket and reload keystore
-        client = getSocket(
-                getTrust(loadKeyStore(keystore, password)), 
-                address, port);
-        
+        client = getSecureSocket(
+                X509CacheingTrustManager.CreateTrustManager(loadKeyStore()), 
+                host, port);
+
         soTimeout = client.getSoTimeout();
         client.setSoTimeout(10000);
-       try {
+        try {
             client.startHandshake();
-            
+
             client.setSoTimeout(soTimeout);
             return client;
         } catch (SSLException e) {
@@ -283,88 +315,33 @@ public class TCPChatController extends BaseController {
         return null;
     }
 
-    private void installCertificateChain(X509Certificate[] chain, KeyStore ks, String address, String keystore, String password) throws NoSuchAlgorithmException, CertificateEncodingException, KeyStoreException, FileNotFoundException, IOException, CertificateException {
+    private void installCertificateChain(X509Certificate[] chain, KeyStore keystore, String hostname) throws NoSuchAlgorithmException, CertificateEncodingException, KeyStoreException, FileNotFoundException, IOException, CertificateException {
 
+        //KeyStore ks = loadKeyStore(keystore, password);
+        
         for (int i = 0; i < chain.length; i++) {
             if( showAcceptCertificateDialog(chain[i])) {
-                String alias = address + "-" + (i + 1);
-                ks.setCertificateEntry(alias, chain[i]);
-                saveCertificate(ks, keystore, password);
+                String alias = hostname + "-" + (i + 1);
+                keystore.setCertificateEntry(alias, chain[i]);
+                saveCertificate(keystore);
             }
         }
     }
     
-    
-    //private static final char[] HEXDIGITS = "0123456789abcdef".toCharArray();
-    private static String toHexString(byte[] bytes) {
-        StringBuilder sb = new StringBuilder(bytes.length * 3);
-        for (int b : bytes) {
-            b &= 0xff;
-            sb.append("0123456789abcdef".toCharArray()[b >> 4]);
-            sb.append("0123456789abcdef".toCharArray()[b & 15]);
-            sb.append(' ');
-        }
-        return sb.toString();
-    }
-
-    private void saveCertificate(KeyStore ks, String keystore, String password) throws FileNotFoundException, KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
-        OutputStream out = new FileOutputStream(getCertPath(keystore, false));
-        ks.store(out, password.toCharArray());
+    private void saveCertificate(KeyStore ks) throws FileNotFoundException, KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+        OutputStream out = new FileOutputStream(getCertPath(false));
+        ks.store(out, config.getSecurity().getKeystorePassword().toCharArray());
         out.close();
     }
 
     private boolean showAcceptCertificateDialog(X509Certificate cert) {
         
-        MessageDigest sha1 = null;
+        CertificateFormatter formatter = new CertificateFormatter(cert);
         
-        try {
-            sha1 = MessageDigest.getInstance("SHA1");
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        MessageDigest md5 = null;
-        try {
-            md5 = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        StringBuilder outputBuilder = new StringBuilder();
-
-        outputBuilder.append("Subject: ");
-        outputBuilder.append(cert.getSubjectDN());
-        outputBuilder.append("\nIssuer: ");
-        outputBuilder.append(cert.getIssuerDN());
-        
-        if( sha1 != null ) {
-            try {
-                sha1.update(cert.getEncoded());
-            } catch (CertificateEncodingException ex) {
-                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            outputBuilder.append("\nsha1: ");
-            outputBuilder.append(toHexString(sha1.digest()));
-        }
-        
-        if( md5 != null ) {
-            try {
-                md5.update(cert.getEncoded());
-            } catch (CertificateEncodingException ex) {
-                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            outputBuilder.append("\nmd5: ");
-            outputBuilder.append(toHexString(md5.digest()));
-        }
-        
-        outputBuilder.append("\n");
-
-        outputBuilder.append("Trust certificate from server?");
+        String paneText = formatter.toString() + "\n" + "Trust certificate from server?";
         
         final JOptionPane optionPane = new JOptionPane(
-                outputBuilder.toString(),       
+                paneText,       
                 JOptionPane.QUESTION_MESSAGE,
                 JOptionPane.YES_NO_OPTION);
 
@@ -385,9 +362,6 @@ public class TCPChatController extends BaseController {
                     if (dialog.isVisible() 
                     && (e.getSource() == optionPane)
                     && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
-                        //If you were going to check something
-                        //before closing the window, you'd do
-                        //it here.
                         dialog.setVisible(false);
                     }
                 }

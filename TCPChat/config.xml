@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <security>
+        <keystore-file>.keystore</keystore-file>
+		<keystore-password>changeit</keystore-password>
+		<usessl>True</usessl>
+
+    </security>
+</configuration>

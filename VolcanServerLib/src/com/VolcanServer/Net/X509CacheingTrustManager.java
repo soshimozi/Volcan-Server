@@ -4,8 +4,12 @@
  */
 package com.VolcanServer.Net;
 
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 /**
@@ -42,5 +46,13 @@ public class X509CacheingTrustManager implements X509TrustManager {
                 throws CertificateException {
             this.chain = chain;
             tm.checkServerTrusted(chain, authType);
+        }
+    
+        public static X509TrustManager CreateTrustManager(KeyStore ks) throws NoSuchAlgorithmException, KeyStoreException {
+            TrustManagerFactory tmf =
+                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
+            X509TrustManager defaultTrustManager = (X509TrustManager) tmf.getTrustManagers()[0];
+            return new X509CacheingTrustManager(defaultTrustManager);
         }
     }
