@@ -48,11 +48,11 @@ public class X509CacheingTrustManager implements X509TrustManager {
             tm.checkServerTrusted(chain, authType);
         }
     
-        public static X509TrustManager CreateTrustManager(KeyStore ks) throws NoSuchAlgorithmException, KeyStoreException {
-            TrustManagerFactory tmf =
-                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(ks);
-            X509TrustManager defaultTrustManager = (X509TrustManager) tmf.getTrustManagers()[0];
-            return new X509CacheingTrustManager(defaultTrustManager);
-        }
+//        public static X509TrustManager CreateTrustManager(KeyStore ks) throws NoSuchAlgorithmException, KeyStoreException {
+//            TrustManagerFactory tmf =
+//                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+//            tmf.init(ks);
+//            return (X509TrustManager) tmf.getTrustManagers()[0];
+//            //return new X509CacheingTrustManager(defaultTrustManager);
+//        }
     }

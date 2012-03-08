@@ -66,7 +66,7 @@ public class TCPChatView extends AbstractViewPanel {
 
         statusField.setText("Disconnected");
         statusField.setPreferredSize(new java.awt.Dimension(64, 24));
-        statusBar.add(statusField, java.awt.BorderLayout.CENTER);
+        statusBar.add(statusField, java.awt.BorderLayout.EAST);
 
         add(statusBar, java.awt.BorderLayout.SOUTH);
 

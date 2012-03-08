@@ -7,8 +7,9 @@ package tcpchat;
 import com.TCPChat.Configuration.ChatConfiguration;
 import com.TCPChat.Controller.TCPChatController;
 import com.TCPChat.Model.TCPChatModel;
-import com.TCPChat.View.TCPChatView;
+import com.TCPChat.View.ChatView;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
@@ -31,16 +32,18 @@ public class TCPChat {
         
         TCPChatController controller = new TCPChatController(config);
         TCPChatModel model = new TCPChatModel();
-        TCPChatView view = new TCPChatView(model);
+        //TCPChatView view = new TCPChatView(model);
+        ChatView newView = new ChatView(model);
 
-        controller.addView(view);
+        controller.addView(newView);
         controller.addModel(model);
 
         model.initDefault();
         
         JFrame displayFrame = new JFrame("TCP Chat");
-        displayFrame.getContentPane().add(view, BorderLayout.CENTER);
+        displayFrame.getContentPane().add(newView, BorderLayout.CENTER);
         displayFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        displayFrame.setMinimumSize(new Dimension(561, 427));
         displayFrame.validate();
         displayFrame.pack();
         displayFrame.setVisible(true);

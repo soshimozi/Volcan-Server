@@ -5,11 +5,11 @@
 package echoserver;
 
 import com.EchoServer.Configuration.ServerConfiguration;
-import com.EchoServer.Network.ClientConnection;
-import com.EchoServer.Event.MessageListener;
+import com.EchoServer.Event.ClientDisconnectedEvent;
 import com.EchoServer.Event.ClientDisconnectedListener;
 import com.EchoServer.Event.MessageEvent;
-import com.EchoServer.Event.ClientDisconnectedEvent;
+import com.EchoServer.Event.MessageListener;
+import com.EchoServer.Network.ClientConnection;
 import com.VolcanServer.Net.SocketTransport;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,7 +39,6 @@ public class EchoServer implements ClientDisconnectedListener, MessageListener, 
     private final List<ClientConnection> connections = new CopyOnWriteArrayList();
     
     private ServerConfiguration serverConfiguration;
-    //public static final int HTTPS_PORT = 4000;
    
     /**
      * @param args the command line arguments
