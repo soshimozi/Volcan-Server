@@ -26,8 +26,6 @@ import javax.net.ssl.X509TrustManager;
  */
 public class SecureKeyManager {
     
-    private final List<InstallCertificateListener> installCertificateListeners = new CopyOnWriteArrayList<InstallCertificateListener>();
-    
     private final String keystoreLocation;
     private final String keystorePassword;
     
@@ -37,23 +35,6 @@ public class SecureKeyManager {
         this.keystorePassword = keystorePassword;
     }
     
-    public void addInstallCertificateListener(InstallCertificateListener listener) {
-        installCertificateListeners.add(listener);
-    }
-    
-    public void removeInstallCertificateListener(InstallCertificateListener listener) {
-        installCertificateListeners.remove(listener);
-    }
-
-    protected void fireInstallCertificate(InstallCertificateEvent event) {
-        InstallCertificateListener [] listeners = new InstallCertificateListener[installCertificateListeners.size()];
-        installCertificateListeners.toArray(listeners);
-        
-        for(InstallCertificateListener listener : listeners) {
-            listener.InstallCertificate(event);
-        }
-        
-    }
     private String getCertPath(boolean loadDefault) {
         
         File file = new File(keystoreLocation);

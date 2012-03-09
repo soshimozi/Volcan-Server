@@ -224,10 +224,6 @@
               <Properties>
                 <Property name="columns" type="int" value="10"/>
                 <Property name="editable" type="boolean" value="false"/>
-                <Property name="rows" type="int" value="20"/>
-                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[84, 275]"/>
-                </Property>
               </Properties>
             </Component>
           </SubComponents>

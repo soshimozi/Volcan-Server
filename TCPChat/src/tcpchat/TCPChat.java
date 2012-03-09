@@ -10,6 +10,7 @@ import com.TCPChat.Model.TCPChatModel;
 import com.TCPChat.View.ChatView;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
@@ -32,16 +33,15 @@ public class TCPChat {
         
         TCPChatController controller = new TCPChatController(config);
         TCPChatModel model = new TCPChatModel();
-        //TCPChatView view = new TCPChatView(model);
-        ChatView newView = new ChatView(model);
+        ChatView chatView = new ChatView(model);
 
-        controller.addView(newView);
+        controller.addView(chatView);
         controller.addModel(model);
 
         model.initDefault();
         
         JFrame displayFrame = new JFrame("TCP Chat");
-        displayFrame.getContentPane().add(newView, BorderLayout.CENTER);
+        displayFrame.getContentPane().add(chatView, BorderLayout.CENTER);
         displayFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         displayFrame.setMinimumSize(new Dimension(561, 427));
         displayFrame.validate();
@@ -67,10 +67,14 @@ public class TCPChat {
             String keystorePassword = xmlConfiguration.getString("security.keystore-password");
             Boolean useSSL = xmlConfiguration.getBoolean("security.usessl");
             
+            String programHome = System.getProperty("user.home") + File.separatorChar + ".volcansoft";
+            
+            File keystorePath = new File(programHome, keystoreFile);
+            
             //copy values from configuration
             config.setSecurity(ChatConfiguration.CreateSecurityConfiguration());
             
-            config.getSecurity().setKeyStoreFile(keystoreFile);
+            config.getSecurity().setKeyStoreFile(keystorePath.toString());
             config.getSecurity().setKeystorePassword(keystorePassword);
             config.getSecurity().setUseSSL(useSSL);
             

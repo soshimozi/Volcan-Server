@@ -5,41 +5,30 @@
 package echoserver;
 
 import com.EchoServer.Configuration.ServerConfiguration;
-import com.EchoServer.Event.ClientDisconnectedEvent;
-import com.EchoServer.Event.ClientDisconnectedListener;
-import com.EchoServer.Event.MessageEvent;
-import com.EchoServer.Event.MessageListener;
+import com.EchoServer.Configuration.ServerConfiguration.Server;
+import com.EchoServer.Event.*;
 import com.EchoServer.Network.ClientConnection;
-import com.VolcanServer.Net.SocketTransport;
-import java.io.FileInputStream;
+import com.VolcanServer.Net.NetworkTransport;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.net.ServerSocketFactory;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
 
 /**
  *
  * @author Monkeybone
  */
-public class EchoServer implements ClientDisconnectedListener, MessageListener, Runnable {
+public class EchoServer implements Runnable {
 
-    private final List<ClientConnection> connections = new CopyOnWriteArrayList();
+    private ServerConfiguration configuration;
+    private final List<ServerBase> servers = new ArrayList<ServerBase>();
     
-    private ServerConfiguration serverConfiguration;
-   
     /**
      * @param args the command line arguments
      */
@@ -49,97 +38,25 @@ public class EchoServer implements ClientDisconnectedListener, MessageListener, 
     }
 
     @Override
-    public void clientDisconnected(ClientDisconnectedEvent evt) {
-        ClientConnection connection = (ClientConnection) evt.getSource();
-        connection.close();
-        connections.remove(connection);
-        
-        Logger.getLogger(EchoServer.class.getName()).log(Level.INFO, "Client disconnected from {0}", connection.getTransport().getSocketAddress());
-    }
-
-    @Override
     public void run() {
-        try {
-            
-            serverConfiguration = loadServerConfiguration();
-            ServerSocket server = getServerSocket();
+        
+        configuration = loadServerConfiguration();
+
+        for(Server serverConfiguration : configuration.getServers() ) {
+            TransportListener listener = new TCPSocketListener(serverConfiguration.getSecurity().getUseSSL(), serverConfiguration.getSecurity().getKeyStoreFile(), 
+                    serverConfiguration.getSecurity().getKeyStorePassword());
+
+            SocketServer server = new SocketServer(listener, serverConfiguration.getPort());
+            server.Start();
+            servers.add(server);
 
             Logger.getLogger(EchoServer.class.getName()).log(Level.INFO, "Server started and listening on port {0}", serverConfiguration.getPort());
-            
-            while(true) {
-                try {
-                    Socket clientSocket = server.accept();
-                    
-                    SocketTransport transport = new SocketTransport(clientSocket);
-                    ClientConnection newConnection = new ClientConnection(transport);
-                    
-                    newConnection.addClientDisconnectedListener(this);
-                    newConnection.addMessageListener(this);
-                    
-                    connections.add(newConnection);
-                    
-                    Logger.getLogger(EchoServer.class.getName()).log(Level.INFO, "Incomming connection excepted from {0}", transport.getSocketAddress());
-                    
-                } catch (IOException ex) {
-                    Logger.getLogger(EchoServer.class.getName()).log(Level.SEVERE, null, ex);
-                    
-                    return;
-                }
-            }
-         
-        } catch (IOException ex) {
-            Logger.getLogger(EchoServer.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (Exception ex) {
-            Logger.getLogger(EchoServer.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-
-    @Override
-    public void onMessage(MessageEvent event) {
-        // echo to all clients
-        
-        for(ClientConnection c : connections) {
-            String address = c.getTransport().getSocketAddress().toString();
-            c.send(address + ": " + event.getMessage());
-        }
-        
-    }
-    
-    public ServerSocket getServerSocket() throws Exception {
-
-        ServerSocketFactory factory;
-        if( serverConfiguration.getSecurity().getUseSSL() ) {
-            KeyManagerFactory kmf = getKeyStore();
-            
-            SSLContext sslcontext = 
-                SSLContext.getInstance("SSLv3");
-
-            sslcontext.init(kmf.getKeyManagers(), null, null);
-            factory = sslcontext.getServerSocketFactory();
-        } else {
-            factory = ServerSocketFactory.getDefault();
-        }
-            
-        return factory.createServerSocket(serverConfiguration.getPort());
-    }
-
-    private KeyManagerFactory getKeyStore() throws CertificateException, KeyStoreException, UnrecoverableKeyException, IOException, NoSuchAlgorithmException {
-        
-        String keystoreFile = serverConfiguration.getSecurity().getKeyStoreFile();
-        
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream(keystoreFile), serverConfiguration.getSecurity().getKeyStorePassword().toCharArray());
-        KeyManagerFactory kmf = 
-            KeyManagerFactory.getInstance("SunX509");
-        kmf.init(ks, serverConfiguration.getSecurity().getKeyStorePassword().toCharArray());
-        return kmf;
     }
 
     private ServerConfiguration loadServerConfiguration() {
         
         ServerConfiguration configuration = new ServerConfiguration();
-        
-        configuration.setSecurity(ServerConfiguration.CreateSecurity());
         
         XMLConfiguration xmlConfig = null;
         try {
@@ -149,19 +66,28 @@ public class EchoServer implements ClientDisconnectedListener, MessageListener, 
         }
         
         if( xmlConfig != null ) {
-            int port = xmlConfig.getInt("listen-port");
             
-            String keystoreFilename = xmlConfig.getString("security.keystore-file");
-            String keystorePassword = xmlConfig.getString("security.keystore-password");
-            Boolean useSSL = xmlConfig.getBoolean("security.use-ssl");
+            Object prop = xmlConfig.getProperty("server");   
             
-            configuration.getSecurity().setKeyStoreFile(keystoreFilename);
-            configuration.getSecurity().setKeyStorePassword(keystorePassword);
-            configuration.getSecurity().setUseSSL(useSSL);
-            configuration.setPort(port);
+            List<HierarchicalConfiguration> servers = xmlConfig.configurationsAt("servers.server");
+            for(HierarchicalConfiguration serverConfig : servers) {
+                int port = serverConfig.getInt("listen-port");
+
+                String keystoreFilename = serverConfig.getString("security.keystore-file");
+                String keystorePassword = serverConfig.getString("security.keystore-password");
+                Boolean useSSL = serverConfig.getBoolean("security.use-ssl");
+                
+                Server server = ServerConfiguration.CreateServer();
+                
+                configuration.addServer(server);
+                server.setPort(port);
+                server.setSecurity(Server.CreateSecurity());
+                server.getSecurity().setKeyStoreFile(keystoreFilename);
+                server.getSecurity().setKeyStorePassword(keystorePassword);
+                server.getSecurity().setUseSSL(useSSL);
+            }
         }
         
         return configuration;
     }
-    
 }

@@ -168,8 +168,6 @@ public class ChatView extends AbstractViewPanel {
 
         chatText.setColumns(10);
         chatText.setEditable(false);
-        chatText.setRows(20);
-        chatText.setPreferredSize(new java.awt.Dimension(84, 275));
         chatTextPane.setViewportView(chatText);
 
         chatPane.add(chatTextPane, java.awt.BorderLayout.CENTER);
@@ -265,7 +263,10 @@ public class ChatView extends AbstractViewPanel {
             String output = (String) pce.getNewValue();
             if( !output.equals("") ) {
                 chatText.append(output);
+                model.setIncommingMessage("");
             }
+            
+            
         } else if( pce.getPropertyName().equals(TCPChatController.ELEMENT_LAST_ERROR_PROPERTY )) {
             lastError = (String) pce.getNewValue();
         }

@@ -5,14 +5,8 @@
 package com.TCPChat.Engine;
 
 import com.TCPChat.Controller.TCPChatController;
-import com.TCPChat.Event.DisconnectedEvent;
-import com.TCPChat.Event.ErrorEvent;
-import com.TCPChat.Event.HandshakeBeganEvent;
-import com.TCPChat.Event.MessageEvent;
-import com.TCPChat.Listener.DisconnectedListener;
-import com.TCPChat.Listener.ErrorListener;
-import com.TCPChat.Listener.HandshakeBeganListener;
-import com.TCPChat.Listener.MessageListener;
+import com.TCPChat.Event.*;
+import com.TCPChat.Listener.*;
 import com.TCPChat.Message.Message;
 import com.TCPChat.Security.SecureKeyManager;
 import com.VolcanServer.Net.X509CacheingTrustManager;
@@ -44,16 +38,14 @@ public class ClientEngine {
     private final List<DisconnectedListener> disconnectedListeners = new CopyOnWriteArrayList<DisconnectedListener>();
     private final List<HandshakeCompletedListener> handshakeCompletedListeners = new CopyOnWriteArrayList<HandshakeCompletedListener>();
     private final List<HandshakeBeganListener> handshakeBeganListeners = new CopyOnWriteArrayList<HandshakeBeganListener>();
-    
+    private final List<InstallCertificateListener> installCertificateListeners = new CopyOnWriteArrayList<InstallCertificateListener>();
     private final BlockingQueue<Message> outboundQueue = new LinkedBlockingQueue<Message>();
-    
     private final SecureKeyManager keyManager;
-    private final TCPChatController controller;
     
     private Socket socket = null;
-    public ClientEngine(TCPChatController controller, SecureKeyManager keyManager) {
+    
+    public ClientEngine(SecureKeyManager keyManager) {
         this.keyManager = keyManager;
-        this.controller = controller;
     }
 
     public boolean connectSecure(String host, int port) throws NoSuchAlgorithmException, KeyStoreException, CertificateException, KeyManagementException, CertificateEncodingException, IOException {
@@ -158,6 +150,24 @@ public class ClientEngine {
         disconnectedListeners.remove(listener);
     }
 
+    public void addInstallCertificateListener(InstallCertificateListener listener) {
+        installCertificateListeners.add(listener);
+    }
+    
+    public void removeInstallCertificateListener(InstallCertificateListener listener) {
+        installCertificateListeners.remove(listener);
+    }
+
+    protected void fireInstallCertificate(InstallCertificateEvent event) {
+        InstallCertificateListener [] listeners = new InstallCertificateListener[installCertificateListeners.size()];
+        installCertificateListeners.toArray(listeners);
+        
+        for(InstallCertificateListener listener : listeners) {
+            listener.InstallCertificate(event);
+        }
+        
+    }
+    
     protected void fireMessageReceived(MessageEvent event) {
         MessageListener [] listeners = new MessageListener[messageListeners.size()];
         messageListeners.toArray(listeners);
@@ -189,15 +199,14 @@ public class ClientEngine {
         SSLContext context = SSLContext.getInstance("TLS");       
         context.init(null, new TrustManager[]{trust}, null);
         SSLSocketFactory factory = context.getSocketFactory();
+        
         return (SSLSocket) factory.createSocket(host, port);
     }
-    
     
     private Socket getSocket(String host, int port) throws IOException  {
         SocketFactory factory = SocketFactory.getDefault();
         return factory.createSocket(host, port);
     }
-
             
     private Socket getSecureSocket(String host, int port) throws KeyStoreException, KeyManagementException, CertificateEncodingException, CertificateException, IOException, NoSuchAlgorithmException {
 
@@ -222,9 +231,7 @@ public class ClientEngine {
             Integer count = 0;
             for(X509Certificate cert : socketTrust.getChain()) {
                 
-                if( controller.showAcceptCertificateDialog(cert)) {
-                    keyManager.installCertificate(cert, host + count.toString());
-                }
+                fireInstallCertificate(new InstallCertificateEvent(this, keyManager, cert));
                 
                 count++;
             }
@@ -252,36 +259,41 @@ public class ClientEngine {
     }
 
     private void pumpMessages() throws IOException {
-        // start up a thread to start pumping messages
-
-        final InputStream inputStream = socket.getInputStream();
-        final InputStreamReader reader = new InputStreamReader(inputStream);
-        final BufferedReader bufferedReader = new BufferedReader(reader);
-        
         Thread messagePump = new Thread(
                 new Runnable()
                 {
                     @Override
                     public void run() {
-        
-                        String line;
+                        InputStream inputStream = null;
+                        
                         try {
-                            while((line = bufferedReader.readLine()) != null) {
-                                fireMessageReceived(new MessageEvent(this, new Message(line)));
+                            inputStream = socket.getInputStream();
+                            InputStreamReader reader = new InputStreamReader(inputStream);
+                            BufferedReader bufferedReader = new BufferedReader(reader);
+                            String line;
+                            
+                            try {
+                                while((line = bufferedReader.readLine()) != null) {
+                                    fireMessageReceived(new MessageEvent(this, new Message(line)));
+                                }
+                            } catch (IOException ex) {
+                                Logger.getLogger(ClientEngine.class.getName()).log(Level.SEVERE, null, ex);
+                                fireError(new ErrorEvent(this, ex));
                             }
+                            
+                            try {
+                                inputStream.close();
+                            } catch (IOException ex) {
+                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            
                         } catch (IOException ex) {
                             Logger.getLogger(ClientEngine.class.getName()).log(Level.SEVERE, null, ex);
                             fireError(new ErrorEvent(this, ex));
-                        }
-
-                        try {
-                            inputStream.close();
-                        } catch (IOException ex) {
-                            Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+                        } 
 
                         fireDisconnected(new DisconnectedEvent(this));
-                        socket = null;        
+                        socket = null;
                     }
                 });
         
@@ -325,17 +337,7 @@ public class ClientEngine {
                             Logger.getLogger(ClientEngine.class.getName()).log(Level.SEVERE, null, ex);
                             Thread.currentThread().interrupt();
                         }
-    //                            try {
-                            //String chatText = (String) getModelProperty(TCPChatModel.class, TCPChatController.ELEMENT_CHAT_ENTRY_PROPERTY);
-    //                                BufferedWriter bufferedwriter 
-    //                                        = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-    //                                bufferedwriter.write(chatText + "\n");
-    //                                bufferedwriter.flush();
-    //                            } catch (IOException ex) {
-    //                                Logger.getLogger(TCPChatController.class.getName()).log(Level.SEVERE, null, ex);
-    //                            } 
                     }
-
                 });
 
         sendThread.start();

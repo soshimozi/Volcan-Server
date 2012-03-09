@@ -3,7 +3,7 @@
     <security>
         <keystore-file>.keystore</keystore-file>
 		<keystore-password>changeit</keystore-password>
-		<usessl>True</usessl>
+		<usessl>true</usessl>
 
     </security>
 </configuration>

@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -41,7 +42,9 @@ import javax.swing.JOptionPane;
  *
  * @author MonkeyBreath
  */
+@SuppressWarnings("LeakingThisInConstructor")
 public class TCPChatController extends BaseController implements InstallCertificateListener, MessageListener, DisconnectedListener, ErrorListener, HandshakeCompletedListener, HandshakeBeganListener {
+   
     public static String ELEMENT_STATUS_PROPERTY = "Status";
     public static String ELEMENT_CHAT_ENTRY_PROPERTY = "ChatEntry";
     public static String ELEMENT_CONNECT_ACTION = "Connect";
@@ -53,21 +56,30 @@ public class TCPChatController extends BaseController implements InstallCertific
     public static String ELEMENT_LAST_ERROR_PROPERTY = "LastError";
             
     
-    //private Socket socket;
-    private final ChatConfiguration config;
+    private SSLSession session = null;
+    
+    private final boolean secure;
     private final ClientEngine engine;
+    
     public  TCPChatController(ChatConfiguration config) {
-        SecureKeyManager keyManager = new SecureKeyManager(config.getSecurity().getKeystoreFile(), config.getSecurity().getKeystorePassword());
-        engine = new ClientEngine(this, keyManager);
+        
+        String keystorePath = "";
+                
+        SecureKeyManager keyManager 
+                = new SecureKeyManager(
+                    config.getSecurity().getKeystoreFile(), 
+                    config.getSecurity().getKeystorePassword());
+        
+        engine = new ClientEngine(keyManager);
 
-        keyManager.addInstallCertificateListener(this);
+        engine.addInstallCertificateListener(this);
         engine.addMessageListener(this);
         engine.addErrorListener(this);
         engine.addDisconnectedListener(this);
         engine.addHandshakeCompletedListener(this);
         engine.addHandshakeBeganListener(this);
         
-        this.config = config;
+        secure = config.getSecurity().getUseSSL();
     }
     
     @Override
@@ -109,7 +121,15 @@ public class TCPChatController extends BaseController implements InstallCertific
     
     public void disconnect() {
         
+        // leave that session
+        if( session != null ) {
+            session.getSessionContext().setSessionTimeout(0);
+            session = null;
+        }
+
         engine.disconnect();
+        
+        
         setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Disconnected);        
     }
     
@@ -119,35 +139,33 @@ public class TCPChatController extends BaseController implements InstallCertific
         Thread connectThread = new Thread(
                 new Runnable()
                 {
+                    @Override
+                    public void run() {
+                        String address = (String) getModelProperty(TCPChatModel.class, ELEMENT_HOST_PROPERTY);
+                        int port = (Integer) getModelProperty(TCPChatModel.class, ELEMENT_PORT_PROPERTY);
 
-            @Override
-            public void run() {
-                String address = (String) getModelProperty(TCPChatModel.class, ELEMENT_HOST_PROPERTY);
-                int port = (Integer) getModelProperty(TCPChatModel.class, ELEMENT_PORT_PROPERTY);
-
-                try {
-                    if( config.getSecurity().getUseSSL() ) {
-                        if( engine.connectSecure(address, port) )
-                            setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Connected);
-                    } else {
-                        if( engine.connect(address, port) )
-                            setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Connected);
+                        try {
+                            if( secure ) {
+                                if( engine.connectSecure(address, port) )
+                                    setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Connected);
+                            } else {
+                                if( engine.connect(address, port) )
+                                    setModelProperty(ELEMENT_STATUS_PROPERTY, StatusEnum.Connected);
+                            }
+                        } catch (NoSuchAlgorithmException ex) {
+                            setError(ex);
+                        } catch (KeyStoreException ex) {
+                            setError(ex);
+                        } catch (KeyManagementException ex) {
+                            setError(ex);
+                        } catch (CertificateEncodingException ex) {
+                            setError(ex);
+                        } catch (CertificateException ex) {
+                            setError(ex);
+                        } catch (IOException ex) {
+                            setError(ex);
+                        }
                     }
-                } catch (NoSuchAlgorithmException ex) {
-                    setError(ex);
-                } catch (KeyStoreException ex) {
-                    setError(ex);
-                } catch (KeyManagementException ex) {
-                    setError(ex);
-                } catch (CertificateEncodingException ex) {
-                    setError(ex);
-                } catch (CertificateException ex) {
-                    setError(ex);
-                } catch (IOException ex) {
-                    setError(ex);
-                }
-            }
-
                 });
         
         connectThread.start();
@@ -222,6 +240,7 @@ public class TCPChatController extends BaseController implements InstallCertific
     public void handshakeCompleted(HandshakeCompletedEvent hce) {
         // checkout hce
         SSLSocket socket = hce.getSocket();
+        session = hce.getSession();
     }
 
     @Override
