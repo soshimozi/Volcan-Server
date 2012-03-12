@@ -4,7 +4,6 @@
  */
 package com.EchoServer.Event;
 
-import com.EchoServer.Event.MessageEvent;
 import java.util.EventListener;
 
 /**

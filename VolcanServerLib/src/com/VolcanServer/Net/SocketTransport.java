@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
+import java.nio.channels.SocketChannel;
+import javax.net.SocketFactory;
 
 /**
  *
@@ -23,6 +25,15 @@ public class SocketTransport implements NetworkTransport {
     public SocketTransport() {
     }
 
+    public static NetworkTransport CreateSocketTransport(String address, int port) throws UnknownHostException, IOException {
+        
+        SocketFactory factory = SocketFactory.getDefault();
+//        return factory.createSocket(host, port);
+//        Socket socket = new Socket(address, port);
+//        //socket.//
+        return new SocketTransport(factory.createSocket(address, port));
+    }
+    
     @Override
     public SocketAddress getSocketAddress() {
         return socket.getRemoteSocketAddress();
@@ -45,12 +56,12 @@ public class SocketTransport implements NetworkTransport {
 
     @Override
     public int getReceiveTimeout() throws SocketException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return socket.getSoTimeout();
     }
 
     @Override
     public void setReceiveTimeout(int value) throws SocketException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        socket.setSoTimeout(value);
     }
 
     @Override
@@ -81,5 +92,20 @@ public class SocketTransport implements NetworkTransport {
     public void close(boolean force) throws IOException {
         if( getIsConnected() )
             socket.close();
+    }
+
+    @Override
+    public SocketChannel getSocketChannel() {
+        
+        //if( getIsConnected() ) {
+            return socket.getChannel();
+        //} else {
+        //    return null;
+       // }
+    }
+
+    @Override
+    public Socket getSocket() {
+        return socket;
     }
 }

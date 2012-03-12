@@ -4,7 +4,6 @@
  */
 package com.EchoServer.Event;
 
-import com.EchoServer.Network.ClientConnection;
 import com.VolcanServer.Net.NetworkTransport;
 import java.util.EventObject;
 

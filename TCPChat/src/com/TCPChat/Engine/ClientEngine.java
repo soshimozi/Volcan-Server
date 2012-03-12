@@ -9,7 +9,7 @@ import com.TCPChat.Event.*;
 import com.TCPChat.Listener.*;
 import com.TCPChat.Message.Message;
 import com.TCPChat.Security.SecureKeyManager;
-import com.VolcanServer.Net.X509CacheingTrustManager;
+import com.VolcanServer.Security.X509CacheingTrustManager;
 import java.io.*;
 import java.net.Socket;
 import java.security.KeyManagementException;

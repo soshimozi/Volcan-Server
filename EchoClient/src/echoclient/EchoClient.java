@@ -5,7 +5,7 @@
 package echoclient;
 
 import com.VolcanServer.Net.SocketTransport;
-import com.VolcanServer.Net.X509CacheingTrustManager;
+import com.VolcanServer.Security.X509CacheingTrustManager;
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.UnknownHostException;
@@ -30,7 +30,7 @@ public class EchoClient {
         try {
 
             String address = "127.0.0.1";
-            int port = 4000;
+            int port = 5555;
             
             System.out.println("Connecting to server on port 4000...");
 

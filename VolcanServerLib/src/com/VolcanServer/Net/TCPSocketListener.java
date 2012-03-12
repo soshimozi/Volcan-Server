@@ -2,14 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package echoserver;
+package com.VolcanServer.Net;
 
-import com.VolcanServer.Net.NetworkTransport;
-import com.VolcanServer.Net.SocketTransport;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
+import java.nio.channels.ServerSocketChannel;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.logging.Level;
@@ -64,6 +62,12 @@ public class TCPSocketListener implements TransportListener {
         if( factory != null ) {
             socket = factory.createServerSocket(listenPort);
         }
+
+        if( socket != null ) {
+            ServerSocketChannel channel = socket.getChannel();
+            channel.configureBlocking(false);
+        }
+
     }
 
     @Override
@@ -71,6 +75,7 @@ public class TCPSocketListener implements TransportListener {
         return new SocketTransport(socket.accept());
     }
     
+    @Override
     public void close() {
         try {
             socket.close();
