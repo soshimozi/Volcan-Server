@@ -2,20 +2,19 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package jsocks;
+package com.jsocks.exception;
 
 /**
  *
  * @author MonkeyBreath
  */
-class InvalidHeaderException extends Exception {
-
-    public InvalidHeaderException() {
+public class AuthorizationException extends Exception {
+    
+    public AuthorizationException() {
         super();
     }
     
-    public InvalidHeaderException(String message) {
+    public AuthorizationException(String message) {
         super(message);
     }
-    
 }

@@ -2,19 +2,18 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package jsocks;
+package com.jsocks.exception;
 
 /**
  *
  * @author MonkeyBreath
  */
-public class AuthorizationException extends Exception {
-    
-    public AuthorizationException() {
+public class HandshakeException extends Exception {
+    public HandshakeException() {
         super();
     }
     
-    public AuthorizationException(String message) {
+    public HandshakeException(String message) {
         super(message);
     }
 }

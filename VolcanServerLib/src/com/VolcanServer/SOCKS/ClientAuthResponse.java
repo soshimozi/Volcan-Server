@@ -10,25 +10,27 @@ import java.io.*;
  *
  * @author MonkeyBreath
  */
-public class ClientAuthResponse {
+public class ClientAuthResponse implements Serializable {
     public byte version;
     public byte response;
     
-    public static ClientAuthResponse DeSerialize(InputStream stream) throws IOException {
+    public static ClientAuthResponse CreateClientAuthResponse(InputStream stream) throws IOException {
+        ClientAuthResponse auth = new ClientAuthResponse();
+        auth.DeSerialize(stream);
+        return auth;
+    }
         
-        ClientAuthResponse resp = new ClientAuthResponse();
+    public void DeSerialize(InputStream stream) throws IOException {
         
         DataInputStream inputStream = new DataInputStream(stream);
-        resp.version = inputStream.readByte();
-        resp.response = inputStream.readByte();
-        
-        return resp;
+        version = inputStream.readByte();
+        response = inputStream.readByte();
     }
     
-    public static void Serialize(OutputStream stream, ClientAuthResponse value) throws IOException {
+    public void Serialize(OutputStream stream) throws IOException {
         
         DataOutputStream outputStream = new DataOutputStream(stream);
-        outputStream.writeByte(value.version);
-        outputStream.writeByte(value.response);
+        outputStream.writeByte(version);
+        outputStream.writeByte(response);
     }
 }

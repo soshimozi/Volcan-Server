@@ -10,34 +10,36 @@ import java.io.*;
  *
  * @author MonkeyBreath
  */
-public class MethodIdentificationPacket {
+public class MethodIdentificationPacket implements Serializable {
     public byte version;
     public byte nmethods;
     public byte [] methods;
     
-    public static MethodIdentificationPacket DeSerialize(InputStream stream) throws IOException {
-        
+    public static MethodIdentificationPacket CreateMethodIdentificationPacket(InputStream stream) throws IOException {
         MethodIdentificationPacket mip = new MethodIdentificationPacket();
-        
-        DataInputStream inputStream = new DataInputStream(stream);
-        mip.version = inputStream.readByte();
-        mip.nmethods = inputStream.readByte();
-        
-        if( mip.nmethods > 0 ) {
-            mip.methods = new byte[mip.nmethods];
-            inputStream.read(mip.methods);
-        }
-        
+        mip.DeSerialize(stream);
         return mip;
     }
+    
+    public void DeSerialize(InputStream stream) throws IOException {
+        
+        DataInputStream inputStream = new DataInputStream(stream);
+        version = inputStream.readByte();
+        nmethods = inputStream.readByte();
+        
+        if( nmethods > 0 ) {
+            methods = new byte[nmethods];
+            inputStream.read(methods);
+        }
+    }
 
-    public static void Serialize(OutputStream stream, MethodIdentificationPacket value) throws IOException {
+    public void Serialize(OutputStream stream) throws IOException {
         
         DataOutputStream outputStream = new DataOutputStream(stream);
-        outputStream.writeByte(value.version);
-        outputStream.writeByte(value.nmethods);
-        if( value.nmethods > 0 ) {
-            outputStream.write(value.methods);
+        outputStream.writeByte(version);
+        outputStream.writeByte(nmethods);
+        if( nmethods > 0 ) {
+            outputStream.write(methods);
         }
     }
 

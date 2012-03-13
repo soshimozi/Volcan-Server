@@ -4,32 +4,37 @@
  */
 package com.VolcanServer.SOCKS;
 
+import com.VolcanServer.Serialization.Serializeable;
 import java.io.*;
 
 /**
  *
  * @author MonkeyBreath
  */
-public class SOCKS5RequestHeader {
+public class SOCKS5RequestHeader implements Serializeable {
 
-    public static void Serialize(OutputStream stream, SOCKS5RequestHeader value) throws IOException {
-        DataOutputStream outputStream = new DataOutputStream(stream);
-        outputStream.writeByte(value.version);
-        outputStream.writeByte(value.cmd);
-        outputStream.writeByte(value.rsv);
-        outputStream.writeByte(value.atyp);
+    public static SOCKS5RequestHeader CreateSOCKS5RequestHeader(InputStream stream) throws IOException {
+        SOCKS5RequestHeader req = new SOCKS5RequestHeader();
+        req.DeSerialize(stream);
+        return req;
     }
     
-    public static SOCKS5RequestHeader DeSerialize(InputStream stream) throws IOException {
-        SOCKS5RequestHeader header = new SOCKS5RequestHeader();
-        
+    @Override
+    public void Serialize(OutputStream stream) throws IOException {
+        DataOutputStream outputStream = new DataOutputStream(stream);
+        outputStream.writeByte(version);
+        outputStream.writeByte(cmd);
+        outputStream.writeByte(rsv);
+        outputStream.writeByte(atyp);
+    }
+    
+    @Override
+    public void DeSerialize(InputStream stream) throws IOException {
         DataInputStream inputStream = new DataInputStream(stream);
-        header.version = inputStream.readByte();
-        header.cmd = inputStream.readByte();
-        header.rsv = inputStream.readByte();
-        header.atyp = inputStream.readByte();
-        
-        return header;
+        version = inputStream.readByte();
+        cmd = inputStream.readByte();
+        rsv = inputStream.readByte();
+        atyp = inputStream.readByte();
     }
     
     public byte version;

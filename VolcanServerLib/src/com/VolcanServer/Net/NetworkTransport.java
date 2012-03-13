@@ -25,6 +25,5 @@ public abstract interface NetworkTransport {
     public void setSendTimeout(int value) throws SocketException;
     public int getSendTimeout() throws SocketException;
     
-    public SocketChannel getSocketChannel();
     public Socket getSocket();
 }

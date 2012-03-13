@@ -10,24 +10,26 @@ import java.io.*;
  *
  * @author MonkeyBreath
  */
-public class MethodSelectionPacket {
+public class MethodSelectionPacket implements Serializable {
 
-    public static void Serialize(OutputStream stream, MethodSelectionPacket response) throws IOException {
-        DataOutputStream outputStream = new DataOutputStream(stream);
-        
-        outputStream.writeByte(response.version);
-        outputStream.writeByte(response.method);
+    public static MethodSelectionPacket CreateMethodSelectionPacket(InputStream stream) throws IOException {
+        MethodSelectionPacket msp = new MethodSelectionPacket();
+        msp.DeSerialize(stream);
+        return msp;
     }
     
-    public static MethodSelectionPacket DeSerialize(InputStream stream) throws IOException {
+    public void Serialize(OutputStream stream) throws IOException {
+        DataOutputStream outputStream = new DataOutputStream(stream);
+        
+        outputStream.writeByte(version);
+        outputStream.writeByte(method);
+    }
+    
+    public void DeSerialize(InputStream stream) throws IOException {
 
         DataInputStream inputStream = new DataInputStream(stream);
-        
-        MethodSelectionPacket msp = new MethodSelectionPacket();
-        msp.version = inputStream.readByte();
-        msp.method = inputStream.readByte();
-        
-        return msp;
+        version = inputStream.readByte();
+        method = inputStream.readByte();
     }
 
     public byte version;

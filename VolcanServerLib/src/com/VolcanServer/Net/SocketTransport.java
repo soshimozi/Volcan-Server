@@ -95,16 +95,6 @@ public class SocketTransport implements NetworkTransport {
     }
 
     @Override
-    public SocketChannel getSocketChannel() {
-        
-        //if( getIsConnected() ) {
-            return socket.getChannel();
-        //} else {
-        //    return null;
-       // }
-    }
-
-    @Override
     public Socket getSocket() {
         return socket;
     }

@@ -4,12 +4,13 @@
  */
 package jsocks;
 
+import com.jsocks.server.SOCKSServer;
+
 /**
  *
  * @author MonkeyBreath
  */
 public class JSocks {
-
 
     /**
      * @param args the command line arguments
@@ -26,6 +27,4 @@ public class JSocks {
         SOCKSServer server = new SOCKSServer(useSSL, keyStoreFile, keyStorePassword, proxyUserName, proxyPassword, listenPort);
         server.run();
     }
-
-
 }

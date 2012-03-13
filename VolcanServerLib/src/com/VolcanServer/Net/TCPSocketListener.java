@@ -7,7 +7,6 @@ package com.VolcanServer.Net;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.nio.channels.ServerSocketChannel;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.logging.Level;
@@ -41,15 +40,17 @@ public class TCPSocketListener implements TransportListener {
     }
     
     @Override
-    public void initialize(int listenPort) throws IOException {
-        
+    public void initialize(int listenPort) throws IOException { 
         try {
             initalizeFactory();
+            
+            if( factory != null ) {
+                socket = factory.createServerSocket(listenPort);
+            }
+            
         } catch (CertificateException ex) {
             Logger.getLogger(TCPSocketListener.class.getName()).log(Level.SEVERE, null, ex);
         } catch (KeyStoreException ex) {
-            Logger.getLogger(TCPSocketListener.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
             Logger.getLogger(TCPSocketListener.class.getName()).log(Level.SEVERE, null, ex);
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(TCPSocketListener.class.getName()).log(Level.SEVERE, null, ex);
@@ -58,16 +59,6 @@ public class TCPSocketListener implements TransportListener {
         } catch (UnrecoverableKeyException ex) {
             Logger.getLogger(TCPSocketListener.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        if( factory != null ) {
-            socket = factory.createServerSocket(listenPort);
-        }
-
-        if( socket != null ) {
-            ServerSocketChannel channel = socket.getChannel();
-            channel.configureBlocking(false);
-        }
-
     }
 
     @Override

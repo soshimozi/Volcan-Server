@@ -2,14 +2,16 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package jsocks;
+package com.jsocks.server;
 
+import com.jsocks.handler.ProxyHandler;
 import com.VolcanServer.Net.NetworkTransport;
 import com.VolcanServer.Net.TCPSocketListener;
 import com.VolcanServer.Net.TransportListener;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jsocks.JSocks;
 
 /**
  *
@@ -55,7 +57,7 @@ public class SOCKSServer implements Runnable {
     }
     
     private void handleClientConnection(NetworkTransport transport, short serverPort) {
-        Proxy proxy = new Proxy(transport, proxyUser, proxyPassword, false, serverPort);
+        ProxyHandler proxy = new ProxyHandler(transport, proxyUser, proxyPassword, true, serverPort);
         
         Thread proxyThread = new Thread(proxy);
         proxyThread.start();

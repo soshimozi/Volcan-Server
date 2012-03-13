@@ -6,46 +6,51 @@ package com.VolcanServer.SOCKS;
 
 import com.VolcanServer.SOCKS.Enum.AddressTypes;
 import com.VolcanServer.SOCKS.Enum.Responses;
+import com.VolcanServer.Serialization.Serializeable;
 import java.io.*;
 
 /**
  *
  * @author MonkeyBreath
  */
-public class SOCKS5Response {
+public class SOCKS5Response implements Serializeable {
 
-    public static void Serialize(OutputStream stream, SOCKS5Response response) throws IOException {
+    public static SOCKS5Response CreateSOCKS5Response(InputStream stream) throws IOException {
+        SOCKS5Response req = new SOCKS5Response();
+        req.DeSerialize(stream);
+        return req;
+    }
+    
+    @Override
+    public void Serialize(OutputStream stream) throws IOException {
         DataOutputStream outputStream = new DataOutputStream(stream);
         
-        outputStream.writeByte(response.version);
-        outputStream.writeByte(response.cmd);
-        outputStream.writeByte(response.rsv);
-        outputStream.writeByte(response.atyp);
-        outputStream.writeInt(response.ip_src);
-        outputStream.writeShort(NetworkUtils.HostToNetworkOrder(response.port_src));
+        outputStream.writeByte(version);
+        outputStream.writeByte(cmd);
+        outputStream.writeByte(rsv);
+        outputStream.writeByte(atyp);
+        //outputStream.writeInt(ip_src);
+        //outputStream.writeShort(NetworkUtils.HostToNetworkOrder(port_src));
     }
 
-    public static SOCKS5Response DeSerialize(InputStream stream) throws IOException {
-        
-        SOCKS5Response response = new SOCKS5Response();
+    @Override
+    public void DeSerialize(InputStream stream) throws IOException {
         
         DataInputStream inputStream = new DataInputStream(stream);
-        response.version = inputStream.readByte();
-        response.cmd = inputStream.readByte();
-        response.rsv = inputStream.readByte();
-        response.atyp = inputStream.readByte();
-        response.ip_src = inputStream.readInt();
-        response.port_src = NetworkUtils.NetworkToHostOrder(inputStream.readByte());
-        
-        return response;
+        version = inputStream.readByte();
+        cmd = inputStream.readByte();
+        rsv = inputStream.readByte();
+        atyp = inputStream.readByte();
+        //ip_src = inputStream.readInt();
+        //port_src = NetworkUtils.NetworkToHostOrder(inputStream.readByte());
     }
     
     public byte version;
     public byte cmd;
     public byte rsv; /* = 0x00 */
     public byte atyp;
-    public int ip_src;
-    public short port_src;
+    //public int ip_src;
+    //public short port_src;
 
     public SOCKS5Response() {
         this(true);

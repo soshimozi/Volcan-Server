@@ -2,18 +2,20 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package jsocks;
+package com.jsocks.exception;
 
 /**
  *
  * @author MonkeyBreath
  */
-public class HandshakeException extends Exception {
-    public HandshakeException() {
+public class InvalidHeaderException extends Exception {
+
+    public InvalidHeaderException() {
         super();
     }
     
-    public HandshakeException(String message) {
+    public InvalidHeaderException(String message) {
         super(message);
     }
+    
 }
