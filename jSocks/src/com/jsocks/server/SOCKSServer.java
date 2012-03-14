@@ -25,17 +25,19 @@ public class SOCKSServer implements Runnable {
     private final String proxyUser;
     private final String proxyPassword;
     private final boolean useSSL;
-
+    private final boolean allowAnon;
+    
     private TransportListener serverListener;
     private int clientCount = 0;
     
-    public SOCKSServer(boolean useSSL, String keyfile, String keyfilePassword, String proxyUser, String proxyPassword, short serverPort) {
+    public SOCKSServer(boolean useSSL, String keyfile, String keyfilePassword, String proxyUser, String proxyPassword, short serverPort, boolean allowAnon) {
         this.useSSL = useSSL;
         this.keyFile = keyfile;
         this.keyfilePassword = keyfilePassword;
         this.proxyUser = proxyUser;
         this.proxyPassword = proxyPassword;
         this.serverPort = serverPort;
+        this.allowAnon = allowAnon;
     }
     
     @Override
@@ -44,7 +46,7 @@ public class SOCKSServer implements Runnable {
             serverListener = new TCPSocketListener(useSSL, keyFile, keyfilePassword);
             serverListener.initialize(serverPort);
 
-            Logger.getLogger(JSocks.class.getName()).log(Level.INFO, "VolcanSOCKS server started on port {0}", serverPort);
+            Logger.getLogger(JSocks.class.getName()).log(Level.INFO, "VolcanSOCKS server started on port {0}\nServer is {1}using SSL", new Object [] { serverPort, useSSL ? "" : "not " });
 
             // now enter accept loop
             while(true) {
@@ -57,7 +59,7 @@ public class SOCKSServer implements Runnable {
     }
     
     private void handleClientConnection(NetworkTransport transport, short serverPort) {
-        ProxyHandler proxy = new ProxyHandler(transport, proxyUser, proxyPassword, true, serverPort);
+        ProxyHandler proxy = new ProxyHandler(transport, proxyUser, proxyPassword, allowAnon, serverPort);
         
         Thread proxyThread = new Thread(proxy);
         proxyThread.start();
